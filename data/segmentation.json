@@ -1,0 +1,62 @@
+[
+    { 
+        "id": 0,
+        "name": "hibernating",
+        "desc": "Last purchase was long back and low number of orders. May be lost.",
+        "action": "Recreate brand value. Offer relevant products and good offers"
+    },
+    { 
+        "id": 1,
+        "name": "at_Risk",
+        "desc": "Some time since the've purchased. Need to bring them back!",
+        "action": "Send personalised email or other messages to reconnect. Provide good offers and share valuable resources"
+    },
+    { 
+        "id": 2,
+        "name": "cant_loose",
+        "desc": "Used to purchase frequently but haven't returned for a long time.",
+        "action": "Win them back. Talk to them. Make them special offers. Make them feel valuable."
+    },
+    { 
+        "id": 3,
+        "name": "about_to_sleep",
+        "desc": "Below average recency and frequency. Will lose them if not reactivated.",
+        "action": "Send personalised email or other messages to reconnect. Provide good offers and share valuable resources."
+    },
+    { 
+        "id": 4,
+        "name": "need_attention",
+        "desc": " Above average recency, frequency and monetary values. May not have bought very recently though.",
+        "action": "Reactivate them. Provide limited time offers. Recommend new products based on purchase history."
+    },
+    { 
+        "id": 5,
+        "name": "loyal_customers",
+        "desc": "Buy on a regular basis. Responsive to promotions.",
+        "action": "Up-sell higher value products. Engage them. Ask for reviews."
+    },
+    { 
+        "id": 6,
+        "name": "promising",
+        "desc": "Recent shoppers, but haven't spent much",
+        "action": "Create more brand awareness. Provide free trials."
+    },
+    { 
+        "id": 7,
+        "name": "new_customers",
+        "desc": "Bought most recently, but not often.",
+        "action": "provide a good onboarding process. Start building the relationship."
+    },
+    { 
+        "id": 8,
+        "name": "potential_loyalists",
+        "desc": "Recent customers with average frequency.",
+        "action": "Recommend other products. Engage in loyalty programs."
+    },
+    { 
+        "id": 9,
+        "name": "champion",
+        "desc": "Bought recently, buy often and spend the most",
+        "action": "Reward them. They can become evangelists and early adopters of new products."
+    }
+]
