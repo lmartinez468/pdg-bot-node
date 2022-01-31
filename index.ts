@@ -277,6 +277,7 @@ bot.launch()
 
 async function buildImage(products: BestProducts[]): Promise<Buffer> {
 	const image = await loadImage('C:/Users/Luciano/PDG/BOT/botNode/top-products.png');
+	// const image = await loadImage('./top-products.png'); Probar este cambio
 	const canvas = createCanvas(1080, 1920);
 	const ctx = canvas.getContext('2d');
 	ctx.drawImage(image, 0, 0, 1080, 1920);
@@ -303,6 +304,8 @@ async function buildImage(products: BestProducts[]): Promise<Buffer> {
 }
 async function buildImageByClient(products: string[][], client: string): Promise<Buffer> {
 	const image = await loadImage('C:/Users/Luciano/PDG/BOT/botNode/top-products.png');
+	// const image = await loadImage('./top-products.png'); probar este cambio
+
 	const canvas = createCanvas(1080, 1920);
 	const ctx = canvas.getContext('2d');
 	ctx.drawImage(image, 0, 0, 1080, 1920);
