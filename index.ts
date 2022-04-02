@@ -5,7 +5,7 @@ import { Message } from "telegraf/typings/core/types/typegram";
 import axios from 'axios';
 import { createCanvas, loadImage, registerFont } from "canvas";
 
-registerFont("./gagalin.ttf",{ family: "gagalin" })
+registerFont("./gagalin.ttf", { family: "gagalin" })
 
 interface LastMsg {
 	message_id: number,
@@ -66,21 +66,45 @@ bot.help(ctx => ctx.reply('Welcomee'))
 bot.start(ctx => ctx.reply('Welcomee'))
 bot.command(['menu', 'opciones'], ctx => { ctx.reply("Opciones:") })
 
-const start = ['hola', 'buenos dias', 'ayuda'];
-let data:Client;
+const start = ['hola', 'buenos dias', 'ayuda', 'Hola', 'Buenos dias', ' Ayuda'];
+let data: Client;
 bot.hears(start, ctx => {
 	if (ctx?.chat?.id) {
 
 		bot.telegram.sendMessage(ctx.chat.id, "En que te puedo ayudar?", {
 
 			reply_markup: {
+				remove_keyboard: true,
+				one_time_keyboard: true,
 				inline_keyboard: [
-					[
-						{ text: "Info de un cliente", callback_data: "client" },
-						{ text: "Info de productos", callback_data: "products" },
-						{ text: "Cargar pedido", callback_data: "loadOrder" },
-						{ text: "Otras opciones", callback_data: "otherOptions" },
-					]
+
+					[{ text: "Info de un cliente", callback_data: "client" }],
+					[{ text: "Info de productos", callback_data: "products" }],
+					[{ text: "Cargar pedido", callback_data: "outScopeMain" }],
+					[{ text: "Otras opciones", callback_data: "outScopeMain" }],
+					[{ text: "Salir", callback_data: "exit" }],
+				]
+			}
+		})
+	}
+})
+
+bot.action('main', ctx => {
+	if (ctx?.chat?.id) {
+		bot.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message?.message_id ?? 0)
+
+		bot.telegram.sendMessage(ctx.chat.id, "En que te puedo ayudar?", {
+
+			reply_markup: {
+				remove_keyboard: true,
+				one_time_keyboard: true,
+				inline_keyboard: [
+
+					[{ text: "Info de un cliente", callback_data: "client" }],
+					[{ text: "Info de productos", callback_data: "products" }],
+					[{ text: "Cargar pedido", callback_data: "outScopeMain" }],
+					[{ text: "Otras opciones", callback_data: "outScopeMain" }],
+					[{ text: "Salir", callback_data: "exit" }],
 				]
 			}
 		})
@@ -89,6 +113,7 @@ bot.hears(start, ctx => {
 
 bot.action('client', ctx => {
 	if (ctx?.chat?.id) {
+		bot.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message?.message_id ?? 0)
 		const result = bot.telegram.sendMessage(ctx.chat.id, "Dime el número de cliente", {
 			reply_markup: { input_field_placeholder: "Id del cliente", force_reply: true },
 			entities: [{
@@ -102,32 +127,92 @@ bot.action('client', ctx => {
 });
 bot.action('lastOrder', ctx => {
 	if (ctx?.chat?.id) {
-		bot.telegram.sendMessage(ctx.chat.id, "El último pedido fue de $600")
+		// bot.telegram.deleteMessage(ctx.chat.id,ctx.callbackQuery.message?.message_id ?? 0)
+		// bot.telegram.sendMessage(ctx.chat.id, "El último pedido fue de $600")
+		bot.telegram.editMessageText(ctx.chat.id, ctx.callbackQuery.message?.message_id, "", "El último pedido fue de $600", {
+
+			reply_markup: {
+				inline_keyboard: [
+
+					[{ text: "Volver", callback_data: "clientOptions" }],
+
+				]
+			}
+		})
+	}
+}
+);
+bot.action('outScopeMain', ctx => {
+	if (ctx?.chat?.id) {
+
+		bot.telegram.editMessageText(ctx.chat.id, ctx.callbackQuery.message?.message_id, "", "Característica no soportada en el PDG",  {
+			reply_markup: {
+				inline_keyboard: [
+
+					[{ text: "Volver", callback_data: "main" }, { text: "Salir", callback_data: "exit" }],
+
+				]
+			}
+		})
+		// bot.telegram.sendMessage(ctx.chat.id, "Caracteristica no soportada en el PDG")
+	}
+});
+
+bot.action('outScopeClient', ctx => {
+	if (ctx?.chat?.id) {
+
+		bot.telegram.editMessageText(ctx.chat.id, ctx.callbackQuery.message?.message_id, "", "Característica no soportada en el PDG",  {
+			reply_markup: {
+				inline_keyboard: [
+
+					[{ text: "Volver", callback_data: "clientOptions" }, { text: "Salir", callback_data: "exit" }],
+
+				]
+			}
+		})
+		// bot.telegram.sendMessage(ctx.chat.id, "Caracteristica no soportada en el PDG")
 	}
 });
 
 bot.action('predictionOrder', ctx => {
 	if (ctx?.chat?.id) {
-		bot.telegram.sendMessage(ctx.chat.id, `A travéz de una prediccíon el cliente compraria $ ${data.nextOrderPredicted}, cuando el valor real fue $ ${data.nextOrder}`)
+		bot.telegram.editMessageText(ctx.chat.id, ctx.callbackQuery.message?.message_id, "", `A travéz de una prediccíon el cliente compraria $ ${data.nextOrderPredicted}, cuando el valor real fue $ ${data.nextOrder}`, {
+
+			reply_markup: {
+				inline_keyboard: [
+
+					[{ text: "Volver", callback_data: "clientOptions" }],
+
+				]
+			}
+		})
 	}
-});
+})
+
 
 bot.action('topProductsByClient', async ctx => {
 	if (ctx?.chat?.id) {
 		// const rex = new RegExp("^'([.*])'$");
+		bot.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message?.message_id ?? 0)
 		const rex = /'\w+', (\d+)*/g
+
 		const bestProductsByClient = data.bestProduct.match(rex)
 		// "'post'".replaceAll("'","","gi")
-		if(bestProductsByClient){
-			const bestProductsByClient2= bestProductsByClient.map(it=> {return it.split(",")})
+		if (bestProductsByClient) {
+			const bestProductsByClient2 = bestProductsByClient.map(it => { return it.split(",") })
 			const imageProducts = await buildImageByClient(bestProductsByClient2, data.name)
-						
-			bot.telegram.sendPhoto(ctx.chat.id, {source:imageProducts})
+			bot.telegram.sendPhoto(ctx.chat.id, { source: imageProducts }, {
+				reply_markup: {
+					inline_keyboard: [
+
+						[{ text: "Volver", callback_data: "clientOptions" }, { text: "Cancelar", callback_data: "exit" }],
+
+					]
+				}
+			})
+
 		}
-		console.log(bestProductsByClient)
-		if(bestProductsByClient) {
-			bot.telegram.sendMessage(ctx.chat.id, "bestProductsByClient")
-		}
+
 	}
 });
 
@@ -136,18 +221,19 @@ bot.action('clientStatus', ctx => {
 		// eslint-disable-next-line @typescript-eslint/no-var-requires
 		const segmentationTable = require('./data/segmentation.json')
 		const segmentationClient = searchSegmentacion(data, segmentationTable)
-		bot.telegram.sendMessage(
-			ctx.chat.id,
+		bot.telegram.editMessageText(
+			ctx.chat.id, ctx.callbackQuery.message?.message_id, "",
 			`El cliente ${data.name} pertenece al segmento ${data.segmentation.toString()}, el cual presenta la particularidad de ${segmentationClient.desc}`,
 			{
 				reply_markup: {
+
 					inline_keyboard: [
-						[
-							{ text: "Ver Acción que se puede tomar hacia el cliente", callback_data: "segmentacionAction" },
-							{ text: "volver", callback_data: "clientOptions" },
-							{ text: "Cancelar", callback_data: "exit" },
+						[{ text: "Ver Acción que se puede tomar hacia el cliente", callback_data: "segmentacionAction" }],
+						[{ text: "volver", callback_data: "clientOptions" },
+						{ text: "Cancelar", callback_data: "exit" }
 						]
 					]
+
 				}
 			})
 	}
@@ -158,8 +244,27 @@ bot.action('segmentacionAction', ctx => {
 		// eslint-disable-next-line @typescript-eslint/no-var-requires
 		const segmentationTable = require('./data/segmentation.json')
 		const segmentationClient = searchSegmentacion(data, segmentationTable)
+		bot.telegram.editMessageText(
+			ctx.chat.id, ctx.callbackQuery.message?.message_id, "",
+			`Como el cliente ${data.name} pertenece al segmento ${data.segmentation.toString()}, se puede realizar la siguiente accion, ${segmentationClient.action}`,
+			{
+				reply_markup: {
 
-		bot.telegram.sendMessage(ctx.chat.id, `Como el cliente ${data.name} pertenece al segmento ${data.segmentation.toString()}, se puede realizar la siguiente accion, ${segmentationClient.action}`,)
+					inline_keyboard: [
+
+						[{ text: "volver", callback_data: "clientOptions" },
+						{ text: "Cancelar", callback_data: "exit" }
+						]
+					]
+
+				}
+			})
+		// bot.telegram.editMessageText(ctx.chat.id,ctx.callbackQuery.message?.message_id,"", `Como el cliente ${data.name} pertenece al segmento ${data.segmentation.toString()}, se puede realizar la siguiente accion, ${segmentationClient.action}`,)
+	}
+});
+bot.action('exit', ctx => {
+	if (ctx?.chat?.id) {
+		bot.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message?.message_id ?? 0)
 	}
 });
 
@@ -169,41 +274,66 @@ bot.action('products', async ctx => {
 		const result = await axios.get(uri).catch(err => err);
 		if (result.data) {
 			const bestProducts: BestProducts[] = result.data;
-			
+
 			const imageProducts = await buildImage(bestProducts)
-			
-			bot.telegram.sendPhoto(ctx.chat.id, {source:imageProducts})
+			bot.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message?.message_id ?? 0)
+			bot.telegram.sendPhoto(ctx.chat.id, { source: imageProducts },	{
+				reply_markup: {
+
+					inline_keyboard: [
+
+						[{ text: "volver", callback_data: "main" },
+						{ text: "Cancelar", callback_data: "exit" }
+						]
+					]
+
+				}
+			} )
 		}
 		else {
 			if (result.response?.status === 404) {
 				bot.telegram.sendMessage(ctx.chat.id, result.response.data.err, {
+					parse_mode: 'HTML',
 					reply_markup: {
 						inline_keyboard: [
 							[
 								{ text: "Introducir otro cliente", callback_data: "client" },
-								{ text: "Cancelar", callback_data: "cancelar" }
+								{ text: "Cancelar", callback_data: "exit" }
 							]
 						]
 					}
 				})
 			}
 			else {
-				bot.telegram.sendMessage(ctx.chat.id, 'Ocurrio un error en la conexíón con la base de datos, reintentar')
+				bot.telegram.editMessageText(ctx.chat.id, ctx.callbackQuery.message?.message_id, '', 'Ocurrio un error en la conexíón con la base de datos, reintentar')
 			}
 		}
-	
-		
-	
+
+
+
 	}
 })
 
-	bot.on("message", async newMsg => {
-		const response = newMsg.message as Message.TextMessage
+bot.on("message", async newMsg => {
+	const response = newMsg.message as Message.TextMessage
+	// bot.telegram.deleteMessage(response.chat.id,newMsg.)
+	if (response.reply_to_message?.message_id == lastMsg.message_id) {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		switch (lastMsg.type) {
+			case "getClient": {
+				bot.telegram.deleteMessage(response.chat.id, response.reply_to_message.message_id)
+				bot.telegram.deleteMessage(response.chat.id, response.message_id)
+				if (isNaN(Number(response.text))) {
+					bot.telegram.sendMessage(newMsg.chat.id, `El cliente debe ser numerico`, {
+						reply_markup: {
+							inline_keyboard: [
+								[{ text: "Introducir nuevamente", callback_data: "client" },
 
-		if (response.reply_to_message?.message_id == lastMsg.message_id) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			switch (lastMsg.type) {
-				case "getClient": {
+								{ text: "Cancelar", callback_data: "exit" }]
+							]
+						}
+					})
+				} else {
 					const uri = `${defaultPath}/${lastMsg.type}/${response.text}`;
 					const result = await axios.get(uri).catch(err => err);
 					if (result.data) {
@@ -213,19 +343,18 @@ bot.action('products', async ctx => {
 								inline_keyboard: [
 									[{ text: "Sí", callback_data: "clientOptions" },
 									{ text: "No", callback_data: "client" },
-									{ text: "Cancelar", callback_data: "cancelar" }]
+									{ text: "Cancelar", callback_data: "exit" }]
 								]
 							}
 						})
-					}
-					else {
+					} else {
 						if (result.response?.status === 404) {
 							bot.telegram.sendMessage(newMsg.chat.id, result.response.data.err, {
 								reply_markup: {
 									inline_keyboard: [
 										[
 											{ text: "Introducir otro cliente", callback_data: "client" },
-											{ text: "Cancelar", callback_data: "cancelar" }
+											{ text: "Cancelar", callback_data: "exit" }
 										]
 									]
 								}
@@ -235,40 +364,41 @@ bot.action('products', async ctx => {
 							bot.telegram.sendMessage(newMsg.chat.id, 'Ocurrio un error en la conexíón con la base de datos, reintentar')
 						}
 					}
-
 				}
 
-					break;
-				case "value":
-					break;
-
-
-				default:
-					break;
 			}
+
+				break;
+			case "value":
+				break;
+
+
+			default:
+				break;
 		}
+	}
 
-	})
+})
 
 
-	bot.action('clientOptions', ctx => {
-		if (ctx?.chat?.id) {
-			bot.telegram.sendMessage(ctx?.chat?.id, `Menu de cliente`, {
-				reply_markup: {
-					inline_keyboard: [
-						[{ text: "Ver último pedido", callback_data: "lastOrder" },
-						{ text: "Ver estado/clasificacion del cliente", callback_data: "clientStatus" },
-						{ text: "Predicción próxima Compra", callback_data: "predictionOrder" },
-						// {text: "Accion a tomar sobre el cliente", callback_data: "cancelar"}, meter adentro del estado
-						{ text: "Productos top del cliente", callback_data: "topProductsByClient" },
-						{ text: "Estadisticas del cliente", callback_data: "clientStats" },
-						{ text: "Cancelar", callback_data: "cancel" },
-						]
-					]
-				}
-			})
-		}
-	})
+bot.action('clientOptions', ctx => {
+	if (ctx?.chat?.id) {
+		bot.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message?.message_id ?? 0)
+
+		bot.telegram.sendMessage(ctx?.chat?.id, `Menu de cliente`, {
+			reply_markup: {
+				inline_keyboard: [
+					[{ text: "Predicción próxima Compra", callback_data: "predictionOrder" }],
+					[{ text: "Ver Monto del último pedido", callback_data: "lastOrder" }],
+					[{ text: "Ver estado/clasificacion del cliente", callback_data: "clientStatus" }],
+					[{ text: "Productos top del cliente", callback_data: "topProductsByClient" }],
+					[{ text: "Estadisticas del cliente", callback_data: "outScopeClient" }],
+					[{ text: "Cancelar", callback_data: "exit" }]
+				]
+			}
+		})
+	}
+})
 
 
 
@@ -289,17 +419,17 @@ async function buildImage(products: BestProducts[]): Promise<Buffer> {
 	ctx.fillStyle = "rgb(180,187,171)";
 	let y = 490;
 	const x = 830
-	products.slice(0,5).forEach((product:BestProducts) => {
+	products.slice(0, 5).forEach((product: BestProducts) => {
 		const productDescription = searchName(product);
 		ctx.font = '42px gagalin';
-		ctx.fillText(productDescription.description.slice(0,18), 340, y);
+		ctx.fillText(productDescription.description.slice(0, 18), 340, y);
 		ctx.font = '45px Impact';
-		ctx.fillText("$"+ productDescription.price.slice(0,5), x, y);
+		ctx.fillText("$" + productDescription.price.slice(0, 5), x, y);
 		y = y + 200;
-		
+
 	});
 
-	
+
 	return canvas.toBuffer("image/png");
 }
 async function buildImageByClient(products: string[][], client: string): Promise<Buffer> {
@@ -320,24 +450,24 @@ async function buildImageByClient(products: string[][], client: string): Promise
 	ctx.fillStyle = "rgb(180,187,171)";
 	let y = 490;
 	const x = 830
-	products.slice(0,5).forEach((product:string[]) => {
-		const productToSeach = {"itemId": product[0].toString().replace("'","").replace("'",""), "quantity": parseInt(product[1])}
+	products.slice(0, 5).forEach((product: string[]) => {
+		const productToSeach = { "itemId": product[0].toString().replace("'", "").replace("'", ""), "quantity": parseInt(product[1]) }
 		const productDescription = searchName(productToSeach);
 		ctx.font = '42px gagalin';
-		ctx.fillText(productDescription.description.slice(0,18), 340, y);
+		ctx.fillText(productDescription.description.slice(0, 18), 340, y);
 		ctx.font = '45px Impact';
-		ctx.fillText("$"+ productDescription.price.slice(0,5), x, y);
+		ctx.fillText("$" + productDescription.price.slice(0, 5), x, y);
 		y = y + 200;
-		
+
 	});
 
-	
+
 	return canvas.toBuffer("image/png");
 }
 
 const searchName = (product: BestProducts) => {
 	return items.find(item => item.itemId == product.itemId) || { price: "10", description: "producto" }
 }
-const searchSegmentacion = (data: Client, segmentTable: Segmentation[]) : Segmentation=> {
-	return segmentTable.find((segment:Segmentation )=> segment.id == data.segmentation) || { id: 0, desc: "0", name:"0", action:"action to do" }
+const searchSegmentacion = (data: Client, segmentTable: Segmentation[]): Segmentation => {
+	return segmentTable.find((segment: Segmentation) => segment.id == data.segmentation) || { id: 0, desc: "0", name: "0", action: "action to do" }
 }
