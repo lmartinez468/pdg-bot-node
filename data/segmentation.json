@@ -1,62 +1,62 @@
 [
     { 
         "id": 0,
-        "name": "hibernating",
-        "desc": "Last purchase was long back and low number of orders. May be lost.",
-        "action": "Recreate brand value. Offer relevant products and good offers"
+        "name": "Perdidos",
+        "desc": "El último pedido fue hace mucho tiempo, y la frecuncia tambien es baja, posiblemente sea un cliente perdido.",
+        "action": "Recrea el valor de la marca. Ofrezca productos relevantes y buenas ofertas."
     },
     { 
         "id": 1,
-        "name": "at_Risk",
-        "desc": "Some time since the've purchased. Need to bring them back!",
-        "action": "Send personalised email or other messages to reconnect. Provide good offers and share valuable resources"
+        "name": "Hibernando",
+        "desc": "Hace un periodo largo que no compran, solia ser un buen cliente.",
+        "action": "Envíe correos electrónicos personalizados u otros mensajes para volver a conectarse. Proporcione buenas ofertas y comparta recursos valiosos."
     },
     { 
         "id": 2,
-        "name": "cant_loose",
-        "desc": "Used to purchase frequently but haven't returned for a long time.",
-        "action": "Win them back. Talk to them. Make them special offers. Make them feel valuable."
+        "name": "No puedes perderlos",
+        "desc": "Solía comprar con frecuencia, pero hace mucho que no no hace.",
+        "action": "Hay que recuperarlos. Habla con ellos. Hazles ofertas especiales. Hazlos sentir valiosos."
     },
     { 
         "id": 3,
-        "name": "about_to_sleep",
-        "desc": "Below average recency and frequency. Will lose them if not reactivated.",
-        "action": "Send personalised email or other messages to reconnect. Provide good offers and share valuable resources."
+        "name": "Durmiendose",
+        "desc": "Compran con una frecuencia por debajo de la media, y hace un periodo mediano que no compran. Se perdera si no se reactiva.",
+        "action": "Reactívalos. Comparta recursos valiosos. Recomendar productos populares. Ofrecer descuentos."
     },
     { 
         "id": 4,
-        "name": "need_attention",
-        "desc": " Above average recency, frequency and monetary values. May not have bought very recently though.",
-        "action": "Reactivate them. Provide limited time offers. Recommend new products based on purchase history."
+        "name": "Necesitan Atencion",
+        "desc": "Clientes que nos compran con una frecuencia y gasto por encima del promedio. Sin embargo, es posible que no haya comprado muy recientemente.",
+        "action": "Reactívelos. Proporcione ofertas por tiempo limitado. Recomendar nuevos productos según el historial de compras."
     },
     { 
         "id": 5,
-        "name": "loyal_customers",
-        "desc": "Buy on a regular basis. Responsive to promotions.",
-        "action": "Up-sell higher value products. Engage them. Ask for reviews."
+        "name": "Fieles",
+        "desc": "Compran de manera regular, responden a las promociones.",
+        "action": "Venda productos de mayor valor, Involucrarlos. Solicite reseñas."
     },
     { 
         "id": 6,
-        "name": "promising",
-        "desc": "Recent shoppers, but haven't spent much",
-        "action": "Create more brand awareness. Provide free trials."
+        "name": "Promesas",
+        "desc": "Han comprado hace poco tiempo, pero no han gastado mucho.",
+        "action": "Crear más conciencia de marca. Proporcione pruebas gratuitas."
     },
     { 
         "id": 7,
-        "name": "new_customers",
-        "desc": "Bought most recently, but not often.",
-        "action": "provide a good onboarding process. Start building the relationship."
+        "name": "Nuevos clientes",
+        "desc": "Han Comprado por primera vez hace poco y con poca frecuecia.",
+        "action": "Proporcione un buen proceso de incorporación. Empiece a construir la relación, en lo posible otorgarle muestras gratis de productos."
     },
     { 
         "id": 8,
-        "name": "potential_loyalists",
-        "desc": "Recent customers with average frequency.",
-        "action": "Recommend other products. Engage in loyalty programs."
+        "name": "Potencial fieles",
+        "desc": "Clientes nuevos que compran con una frecuencia media, pero con incentivos se pueden convertir en nuestros mejores clientes.",
+        "action": "Recomiende otros productos, involucrelo en programas de fidelización."
     },
     { 
         "id": 9,
-        "name": "champion",
-        "desc": "Bought recently, buy often and spend the most",
-        "action": "Reward them. They can become evangelists and early adopters of new products."
+        "name": "Campeones",
+        "desc": "Los campeones son nuestros mejores clientes, su última Compra fue reciente, compra con una alta frecuencia y gastan mucho.",
+        "action": "Recompense a estos clientes. Pueden convertirse en los primeros en adoptar nuevos productos y ayudarán a promover su marca."
     }
 ]

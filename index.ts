@@ -121,7 +121,7 @@ bot.action('client', ctx => {
 			}]
 		})
 		result.then(it => lastMsg = { message_id: it.message_id, type: "getClient" }).catch(err => {
-			(`Error ocurrido: ${err}!!`)
+			(`Error ocurrido al encontrar el cliente: ${err}!!`)
 		})
 	}
 });
@@ -216,52 +216,45 @@ bot.action('topProductsByClient', async ctx => {
 	}
 });
 
-bot.action('clientStatus', ctx => {
+bot.action('clientStatus', async ctx => {
 	if (ctx?.chat?.id) {
 		// eslint-disable-next-line @typescript-eslint/no-var-requires
 		const segmentationTable = require('./data/segmentation.json')
 		const segmentationClient = searchSegmentacion(data, segmentationTable)
-		bot.telegram.editMessageText(
-			ctx.chat.id, ctx.callbackQuery.message?.message_id, "",
-			`El cliente ${data.name} pertenece al segmento ${data.segmentation.toString()}, el cual presenta la particularidad de ${segmentationClient.desc}`,
-			{
-				reply_markup: {
-
-					inline_keyboard: [
-						[{ text: "Ver Acción que se puede tomar hacia el cliente", callback_data: "segmentacionAction" }],
-						[{ text: "volver", callback_data: "clientOptions" },
-						{ text: "Cancelar", callback_data: "exit" }
-						]
-					]
-
-				}
-			})
+		const imageClasification = await buildImageBySegmentClient(segmentationClient, data.name)
+		bot.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message?.message_id ?? 0)
+		bot.telegram.sendPhoto(ctx.chat.id, { source: imageClasification }, {
+			reply_markup: {
+				inline_keyboard: [
+									[{ text: "Ver Acción que se puede tomar hacia el cliente", callback_data: "segmentacionAction" }],
+									[{ text: "volver", callback_data: "clientOptions" },
+									{ text: "Cancelar", callback_data: "exit" }
+									]
+								]
+			}
+		})
 	}
 });
 
-bot.action('segmentacionAction', ctx => {
+bot.action('segmentacionAction', async ctx => {
 	if (ctx?.chat?.id) {
 		// eslint-disable-next-line @typescript-eslint/no-var-requires
 		const segmentationTable = require('./data/segmentation.json')
 		const segmentationClient = searchSegmentacion(data, segmentationTable)
-		bot.telegram.editMessageText(
-			ctx.chat.id, ctx.callbackQuery.message?.message_id, "",
-			`Como el cliente ${data.name} pertenece al segmento ${data.segmentation.toString()}, se puede realizar la siguiente accion, ${segmentationClient.action}`,
-			{
-				reply_markup: {
-
-					inline_keyboard: [
-
-						[{ text: "volver", callback_data: "clientOptions" },
-						{ text: "Cancelar", callback_data: "exit" }
-						]
-					]
-
-				}
-			})
-		// bot.telegram.editMessageText(ctx.chat.id,ctx.callbackQuery.message?.message_id,"", `Como el cliente ${data.name} pertenece al segmento ${data.segmentation.toString()}, se puede realizar la siguiente accion, ${segmentationClient.action}`,)
+		const imageAction = await buildImageByAction(segmentationClient, data.name)
+		bot.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message?.message_id ?? 0)
+		bot.telegram.sendPhoto(ctx.chat.id, { source: imageAction }, {
+			reply_markup: {
+				inline_keyboard: [
+									[{ text: "volver", callback_data: "clientOptions" },
+									{ text: "Cancelar", callback_data: "exit" }
+									]
+								]
+			}
+		})
 	}
 });
+
 bot.action('exit', ctx => {
 	if (ctx?.chat?.id) {
 		bot.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message?.message_id ?? 0)
@@ -291,7 +284,7 @@ bot.action('products', async ctx => {
 			} )
 		}
 		else {
-			if (result.response?.status === 404) {
+			if (result.response?.status === 404 && result.response.data.err) {
 				bot.telegram.sendMessage(ctx.chat.id, result.response.data.err, {
 					parse_mode: 'HTML',
 					reply_markup: {
@@ -348,7 +341,7 @@ bot.on("message", async newMsg => {
 							}
 						})
 					} else {
-						if (result.response?.status === 404) {
+						if (result.response?.status === 404 && result.response.data.err) {
 							bot.telegram.sendMessage(newMsg.chat.id, result.response.data.err, {
 								reply_markup: {
 									inline_keyboard: [
@@ -460,6 +453,83 @@ async function buildImageByClient(products: string[][], client: string): Promise
 		y = y + 200;
 
 	});
+
+
+	return canvas.toBuffer("image/png");
+}
+async function buildImageBySegmentClient(segmentationClient: Segmentation, client: string): Promise<Buffer> {
+
+	const image = await loadImage('./data/template/Clasification.png');
+	const icon = await loadImage(`./data/icons/${segmentationClient.id}.png`);
+
+	const canvas = createCanvas(1080, 1920);
+	const x = canvas.width / 2;
+
+	const ctx = canvas.getContext('2d');
+	ctx.drawImage(image, 0, 0, 1080, 1920);
+	const imageCenterX = (canvas.width - 230) /2
+	ctx.drawImage(icon, imageCenterX, 300, 200, 230);
+	ctx.font = '55px gagalin';
+	ctx.fillStyle = "rgb(217,149,22)";
+	const removeAccents = client.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+	ctx.textAlign = 'center';
+	ctx.fillText(`${removeAccents}`,x, 150)
+	ctx.font = '70px gagalin';
+	ctx.fillStyle = "rgb(255,255,255)";
+
+	ctx.textAlign = 'center';
+
+	ctx.fillText(segmentationClient.name, x, 630)
+
+	ctx.font = '35px gagalin';
+	ctx.fillStyle = "rgb(41,99,132)";
+	
+	ctx.textAlign = 'left';
+	const descriptionNormalized =  segmentationClient.desc.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+	const description = descriptionNormalized.split(/(.{40})/).filter(O=>O)
+	let yTextArea = 850
+	description.forEach(chunk => {
+		yTextArea = yTextArea + 100
+		ctx.fillText(chunk, 150, yTextArea, 800)
+	})
+
+
+	return canvas.toBuffer("image/png");
+}
+async function buildImageByAction(segmentationClient: Segmentation, client: string): Promise<Buffer> {
+
+	const image = await loadImage('./data/template/action.png');
+	const icon = await loadImage(`./data/icons/${segmentationClient.id}.png`);
+
+	const canvas = createCanvas(1080, 1920);
+	const x = canvas.width / 2;
+
+	const ctx = canvas.getContext('2d');
+	ctx.drawImage(image, 0, 0, 1080, 1920);
+	ctx.drawImage(icon, 80, 250, 100, 115);
+	ctx.font = '55px gagalin';
+	ctx.fillStyle = "rgb(217,149,22)";
+	const removeAccents = client.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+	ctx.textAlign = 'center';
+	ctx.fillText(`${removeAccents}`,x, 150)
+	ctx.font = '70px gagalin';
+	ctx.fillStyle = "rgb(255,255,255)";
+
+	ctx.textAlign = 'left';
+
+	ctx.fillText(segmentationClient.name, 220, 340)
+
+	ctx.font = '35px gagalin';
+	ctx.fillStyle = "rgb(41,99,132)";
+	
+	ctx.textAlign = 'left';
+	const descriptionNormalized =  segmentationClient.action.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+	const description = descriptionNormalized.split(/(.{40})/).filter(O=>O)
+	let yTextArea = 510
+	description.forEach(chunk => {
+		yTextArea = yTextArea + 100
+		ctx.fillText(chunk, 150, yTextArea, 800)
+	})
 
 
 	return canvas.toBuffer("image/png");
