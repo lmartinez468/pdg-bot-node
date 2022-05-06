@@ -6,6 +6,7 @@ import axios from 'axios';
 import { createCanvas, loadImage, registerFont } from "canvas";
 
 registerFont("./gagalin.ttf", { family: "gagalin" })
+registerFont("./EraserRegular.ttf", { family: "EraserRegular" })
 
 interface LastMsg {
 	message_id: number,
@@ -79,8 +80,8 @@ bot.hears(start, ctx => {
 				inline_keyboard: [
 
 					[{ text: "Info de un cliente", callback_data: "client" }],
-					[{ text: "Info de productos", callback_data: "products" }],
-					[{ text: "Cargar pedido", callback_data: "outScopeMain" }],
+					[{ text: "Productos Top históricos", callback_data: "products" }],
+					[{ text: "Productos Top del mes", callback_data: "productsMonth" }],
 					[{ text: "Otras opciones", callback_data: "outScopeMain" }],
 					[{ text: "Salir", callback_data: "exit" }],
 				]
@@ -101,8 +102,8 @@ bot.action('main', ctx => {
 				inline_keyboard: [
 
 					[{ text: "Info de un cliente", callback_data: "client" }],
-					[{ text: "Info de productos", callback_data: "products" }],
-					[{ text: "Cargar pedido", callback_data: "outScopeMain" }],
+					[{ text: "Productos Top históricos", callback_data: "products" }],
+					[{ text: "Productos Top del mes", callback_data: "productsMonth" }],
 					[{ text: "Otras opciones", callback_data: "outScopeMain" }],
 					[{ text: "Salir", callback_data: "exit" }],
 				]
@@ -174,16 +175,17 @@ bot.action('outScopeClient', ctx => {
 	}
 });
 
-bot.action('predictionOrder', ctx => {
+bot.action('predictionOrder', async ctx => {
 	if (ctx?.chat?.id) {
-		bot.telegram.editMessageText(ctx.chat.id, ctx.callbackQuery.message?.message_id, "", `A travéz de una prediccíon el cliente compraria $ ${data.nextOrderPredicted}, cuando el valor real fue $ ${data.nextOrder}`, {
-
+		bot.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message?.message_id ?? 0)
+		const imagePrediction = await buildImageByPrediction(data)
+		bot.telegram.sendPhoto(ctx.chat.id, { source: imagePrediction }, {
 			reply_markup: {
 				inline_keyboard: [
-
-					[{ text: "Volver", callback_data: "clientOptions" }],
-
-				]
+									[{ text: "volver", callback_data: "clientOptions" },
+									{ text: "Cancelar", callback_data: "exit" }
+									]
+								]
 			}
 		})
 	}
@@ -199,8 +201,8 @@ bot.action('topProductsByClient', async ctx => {
 		const bestProductsByClient = data.bestProduct.match(rex)
 		// "'post'".replaceAll("'","","gi")
 		if (bestProductsByClient) {
-			const bestProductsByClient2 = bestProductsByClient.map(it => { return it.split(",") })
-			const imageProducts = await buildImageByClient(bestProductsByClient2, data.name)
+			const bestProducts = bestProductsByClient.map(it => { return it.split(",") })
+			const imageProducts = await buildImageByClient(bestProducts, data.name)
 			bot.telegram.sendPhoto(ctx.chat.id, { source: imageProducts }, {
 				reply_markup: {
 					inline_keyboard: [
@@ -268,7 +270,7 @@ bot.action('products', async ctx => {
 		if (result.data) {
 			const bestProducts: BestProducts[] = result.data;
 
-			const imageProducts = await buildImage(bestProducts)
+			const imageProducts = await buildImage(bestProducts, "historicamente")
 			bot.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message?.message_id ?? 0)
 			bot.telegram.sendPhoto(ctx.chat.id, { source: imageProducts },	{
 				reply_markup: {
@@ -290,7 +292,53 @@ bot.action('products', async ctx => {
 					reply_markup: {
 						inline_keyboard: [
 							[
-								{ text: "Introducir otro cliente", callback_data: "client" },
+								
+								{ text: "Cancelar", callback_data: "exit" }
+							]
+						]
+					}
+				})
+			}
+			else {
+				bot.telegram.editMessageText(ctx.chat.id, ctx.callbackQuery.message?.message_id, '', 'Ocurrio un error en la conexíón con la base de datos, reintentar')
+			}
+		}
+
+
+
+	}
+})
+
+bot.action('productsMonth', async ctx => {
+	if (ctx?.chat?.id) {
+		const uri = `${defaultPath}/getProductsMonth`;
+		const result = await axios.get(uri).catch(err => err);
+		if (result.data) {
+			const bestProducts: BestProducts[] = result.data;
+
+			const imageProducts = await buildImage(bestProducts, "DEL MES")
+			bot.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message?.message_id ?? 0)
+			bot.telegram.sendPhoto(ctx.chat.id, { source: imageProducts },	{
+				reply_markup: {
+
+					inline_keyboard: [
+
+						[{ text: "volver", callback_data: "main" },
+						{ text: "Cancelar", callback_data: "exit" }
+						]
+					]
+
+				}
+			} )
+		}
+		else {
+			if (result.response?.status === 404 && result.response.data.err) {
+				bot.telegram.sendMessage(ctx.chat.id, result.response.data.err, {
+					parse_mode: 'HTML',
+					reply_markup: {
+						inline_keyboard: [
+							[
+								
 								{ text: "Cancelar", callback_data: "exit" }
 							]
 						]
@@ -383,7 +431,7 @@ bot.action('clientOptions', ctx => {
 				inline_keyboard: [
 					[{ text: "Predicción próxima Compra", callback_data: "predictionOrder" }],
 					[{ text: "Ver Monto del último pedido", callback_data: "lastOrder" }],
-					[{ text: "Ver estado/clasificacion del cliente", callback_data: "clientStatus" }],
+					[{ text: "Ver clasificación del cliente", callback_data: "clientStatus" }],
 					[{ text: "Productos top del cliente", callback_data: "topProductsByClient" }],
 					[{ text: "Estadisticas del cliente", callback_data: "outScopeClient" }],
 					[{ text: "Cancelar", callback_data: "exit" }]
@@ -398,8 +446,8 @@ bot.action('clientOptions', ctx => {
 
 bot.launch()
 
-async function buildImage(products: BestProducts[]): Promise<Buffer> {
-	const image = await loadImage('C:/Users/Luciano/PDG/BOT/botNode/top-products.png');
+async function buildImage(products: BestProducts[], title: string): Promise<Buffer> {
+	const image = await loadImage('./data/template/top-products.png');
 	// const image = await loadImage('./top-products.png'); Probar este cambio
 	const canvas = createCanvas(1080, 1920);
 	const ctx = canvas.getContext('2d');
@@ -408,7 +456,7 @@ async function buildImage(products: BestProducts[]): Promise<Buffer> {
 	ctx.font = '45px gagalin';
 	ctx.fillStyle = "rgb(255,255,255)";
 	ctx.fillText("Producto", 340, 330)
-	ctx.fillText("Precio", 830, 330)
+	ctx.fillText("Cantidad", 830, 330)
 	ctx.fillStyle = "rgb(180,187,171)";
 	let y = 490;
 	const x = 830
@@ -417,16 +465,19 @@ async function buildImage(products: BestProducts[]): Promise<Buffer> {
 		ctx.font = '42px gagalin';
 		ctx.fillText(productDescription.description.slice(0, 18), 340, y);
 		ctx.font = '45px Impact';
-		ctx.fillText("$" + productDescription.price.slice(0, 5), x, y);
+		ctx.fillText(product.quantity.toString(), x, y);
 		y = y + 200;
 
 	});
-
+	ctx.fillStyle = "rgb(255,255,255)";
+	ctx.font = '65px gagalin';
+	ctx.textAlign = 'center';
+	ctx.fillText(title, 540, 180)
 
 	return canvas.toBuffer("image/png");
 }
 async function buildImageByClient(products: string[][], client: string): Promise<Buffer> {
-	const image = await loadImage('C:/Users/Luciano/PDG/BOT/botNode/top-products.png');
+	const image = await loadImage('./data/template/top-products.png');
 	// const image = await loadImage('./top-products.png'); probar este cambio
 
 	const canvas = createCanvas(1080, 1920);
@@ -531,6 +582,22 @@ async function buildImageByAction(segmentationClient: Segmentation, client: stri
 		ctx.fillText(chunk, 150, yTextArea, 800)
 	})
 
+
+	return canvas.toBuffer("image/png");
+}
+async function buildImageByPrediction(client: Client): Promise<Buffer> {
+
+	const image = await loadImage('./data/template/prediction.png');
+
+	const canvas = createCanvas(1080, 1920);
+	const ctx = canvas.getContext('2d');
+	ctx.drawImage(image, 0, 0, 1080, 1920);
+	
+	ctx.font = '65px EraserRegular';
+	ctx.fillStyle = "rgb(255,255,255)";
+
+	ctx.fillText("PREDICCION: $" + client.nextOrderPredicted.toString().split(".")[0], 310, 740)
+	ctx.fillText("REAL: $" + client.nextOrder.toString().split(".")[0], 310, 940)
 
 	return canvas.toBuffer("image/png");
 }
