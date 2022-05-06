@@ -1,10 +1,11 @@
 
-import { Telegraf } from "telegraf";
-import { Message } from "telegraf/typings/core/types/typegram";
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 import axios from 'axios';
 import { createCanvas, loadImage, registerFont } from "canvas";
+import dotenv from 'dotenv';
+import { Telegraf } from "telegraf";
+import { Message } from "telegraf/typings/core/types/typegram";
 
+dotenv.config();
 registerFont("./gagalin.ttf", { family: "gagalin" })
 registerFont("./EraserRegular.ttf", { family: "EraserRegular" })
 
@@ -19,7 +20,6 @@ interface ItemsDescription {
 	description: string,
 	price: string
 }
-
 
 interface Client {
 	_id: string,
@@ -42,6 +42,7 @@ interface BestProducts {
 	name?: string,
 	price?: number
 }
+
 interface Segmentation {
 	id: number;
 	name: string,
@@ -51,18 +52,21 @@ interface Segmentation {
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const items: ItemsDescription[] = require('./data/items.json');
+const isLocal = process.env.isLocal;
+
+// "5074785160:AAFtjCHJQCVBaW5wuyFSwKwZ1Xlu8Mogxp0" bot Local
+// "5305750219:AAEjbYGphn3rxCkUcDfrZfVtmgr4WXTIPbg" bot remote in heroku
+
+const bot =isLocal ? new Telegraf("5074785160:AAFtjCHJQCVBaW5wuyFSwKwZ1Xlu8Mogxp0") : new Telegraf("5305750219:AAEjbYGphn3rxCkUcDfrZfVtmgr4WXTIPbg")
+const defaultPath = isLocal ? "http://localhost:3001" : "https://api-node-martinez-rigotti.herokuapp.com"
+
 let lastMsg: LastMsg = { message_id: 0, type: "" }
 
-// buildImage();
 
-
-
-const bot = new Telegraf("5074785160:AAFtjCHJQCVBaW5wuyFSwKwZ1Xlu8Mogxp0")
-// const axios = new Axios();
-const defaultPath = "http://localhost:3001";
 bot.start(ctx => {
 	ctx.reply('Bienvenido al Proyecto de Martinez y Rigotti')
 })
+
 bot.help(ctx => ctx.reply('Welcomee'))
 bot.start(ctx => ctx.reply('Welcomee'))
 bot.command(['menu', 'opciones'], ctx => { ctx.reply("Opciones:") })
@@ -70,7 +74,7 @@ bot.command(['menu', 'opciones'], ctx => { ctx.reply("Opciones:") })
 const start = ['hola', 'buenos dias', 'ayuda', 'Hola', 'Buenos dias', ' Ayuda'];
 let data: Client;
 bot.hears(start, ctx => {
-	if (ctx?.chat?.id) {
+	if (ctx?.chat?.id) {	
 
 		bot.telegram.sendMessage(ctx.chat.id, "En que te puedo ayudar?", {
 
@@ -134,9 +138,7 @@ bot.action('lastOrder', ctx => {
 
 			reply_markup: {
 				inline_keyboard: [
-
 					[{ text: "Volver", callback_data: "clientOptions" }],
-
 				]
 			}
 		})
@@ -155,7 +157,6 @@ bot.action('outScopeMain', ctx => {
 				]
 			}
 		})
-		// bot.telegram.sendMessage(ctx.chat.id, "Caracteristica no soportada en el PDG")
 	}
 });
 
@@ -171,7 +172,6 @@ bot.action('outScopeClient', ctx => {
 				]
 			}
 		})
-		// bot.telegram.sendMessage(ctx.chat.id, "Caracteristica no soportada en el PDG")
 	}
 });
 
@@ -212,9 +212,7 @@ bot.action('topProductsByClient', async ctx => {
 					]
 				}
 			})
-
 		}
-
 	}
 });
 
