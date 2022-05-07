@@ -4,6 +4,7 @@ import { createCanvas, loadImage, registerFont } from "canvas";
 import dotenv from 'dotenv';
 import { Telegraf } from "telegraf";
 import { Message } from "telegraf/typings/core/types/typegram";
+import express from "express";
 
 dotenv.config();
 registerFont("./gagalin.ttf", { family: "gagalin" })
@@ -50,6 +51,14 @@ interface Segmentation {
 	action: string
 }
 
+
+
+const app = express()
+
+app.listen(process.env.PORT || 3000);
+
+
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const items: ItemsDescription[] = require('./data/items.json');
 const isLocal = process.env.isLocal;
@@ -57,8 +66,8 @@ const isLocal = process.env.isLocal;
 // "5074785160:AAFtjCHJQCVBaW5wuyFSwKwZ1Xlu8Mogxp0" bot Local
 // "5305750219:AAEjbYGphn3rxCkUcDfrZfVtmgr4WXTIPbg" bot remote in heroku
 
-const bot =isLocal ? new Telegraf("5074785160:AAFtjCHJQCVBaW5wuyFSwKwZ1Xlu8Mogxp0") : new Telegraf("5305750219:AAEjbYGphn3rxCkUcDfrZfVtmgr4WXTIPbg")
-const defaultPath = isLocal ? "http://localhost:3001" : "https://api-node-martinez-rigotti.herokuapp.com"
+const bot =!isLocal ? new Telegraf("5074785160:AAFtjCHJQCVBaW5wuyFSwKwZ1Xlu8Mogxp0") : new Telegraf("5305750219:AAEjbYGphn3rxCkUcDfrZfVtmgr4WXTIPbg")
+const defaultPath = !isLocal ? "http://localhost:3001" : "https://api-node-martinez-rigotti.herokuapp.com"
 
 let lastMsg: LastMsg = { message_id: 0, type: "" }
 
