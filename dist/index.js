@@ -24,11 +24,12 @@ const app = (0, express_1.default)();
 app.listen(process.env.PORT || 3000);
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const items_json_1 = __importDefault(require("./data/items.json"));
+const segmentation_json_1 = __importDefault(require("./data/segmentation.json"));
 const isLocal = process.env.isLocal;
 // "5074785160:AAFtjCHJQCVBaW5wuyFSwKwZ1Xlu8Mogxp0" bot Local
 // "5305750219:AAEjbYGphn3rxCkUcDfrZfVtmgr4WXTIPbg" bot remote in heroku
-const bot = !isLocal ? new telegraf_1.Telegraf("5074785160:AAFtjCHJQCVBaW5wuyFSwKwZ1Xlu8Mogxp0") : new telegraf_1.Telegraf("5305750219:AAEjbYGphn3rxCkUcDfrZfVtmgr4WXTIPbg");
-const defaultPath = !isLocal ? "http://localhost:3001" : "https://api-node-martinez-rigotti.herokuapp.com";
+const bot = isLocal ? new telegraf_1.Telegraf("5074785160:AAFtjCHJQCVBaW5wuyFSwKwZ1Xlu8Mogxp0") : new telegraf_1.Telegraf("5305750219:AAEjbYGphn3rxCkUcDfrZfVtmgr4WXTIPbg");
+const defaultPath = isLocal ? "http://localhost:3001" : "https://api-node-martinez-rigotti.herokuapp.com";
 let lastMsg = { message_id: 0, type: "" };
 bot.start(ctx => {
     ctx.reply('Bienvenido al Proyecto de Martinez y Rigotti');
@@ -168,9 +169,7 @@ bot.action('topProductsByClient', (ctx) => __awaiter(void 0, void 0, void 0, fun
 bot.action('clientStatus', (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     var _g, _h, _j;
     if ((_g = ctx === null || ctx === void 0 ? void 0 : ctx.chat) === null || _g === void 0 ? void 0 : _g.id) {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const segmentationTable = require('./data/segmentation.json');
-        const segmentationClient = searchSegmentacion(data, segmentationTable);
+        const segmentationClient = searchSegmentacion(data, segmentation_json_1.default);
         const imageClasification = yield buildImageBySegmentClient(segmentationClient, data.name);
         bot.telegram.deleteMessage(ctx.chat.id, (_j = (_h = ctx.callbackQuery.message) === null || _h === void 0 ? void 0 : _h.message_id) !== null && _j !== void 0 ? _j : 0);
         bot.telegram.sendPhoto(ctx.chat.id, { source: imageClasification }, {
@@ -188,9 +187,7 @@ bot.action('clientStatus', (ctx) => __awaiter(void 0, void 0, void 0, function* 
 bot.action('segmentacionAction', (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     var _k, _l, _m;
     if ((_k = ctx === null || ctx === void 0 ? void 0 : ctx.chat) === null || _k === void 0 ? void 0 : _k.id) {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const segmentationTable = require('./data/segmentation.json');
-        const segmentationClient = searchSegmentacion(data, segmentationTable);
+        const segmentationClient = searchSegmentacion(data, segmentation_json_1.default);
         const imageAction = yield buildImageByAction(segmentationClient, data.name);
         bot.telegram.deleteMessage(ctx.chat.id, (_m = (_l = ctx.callbackQuery.message) === null || _l === void 0 ? void 0 : _l.message_id) !== null && _m !== void 0 ? _m : 0);
         bot.telegram.sendPhoto(ctx.chat.id, { source: imageAction }, {

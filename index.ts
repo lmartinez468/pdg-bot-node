@@ -61,7 +61,9 @@ app.listen(process.env.PORT || 3000);
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 import items from './data/items.json';
+import segmentationTable from './data/segmentation.json';
 const isLocal = process.env.isLocal;
+
 
 // "5074785160:AAFtjCHJQCVBaW5wuyFSwKwZ1Xlu8Mogxp0" bot Local
 // "5305750219:AAEjbYGphn3rxCkUcDfrZfVtmgr4WXTIPbg" bot remote in heroku
@@ -227,8 +229,6 @@ bot.action('topProductsByClient', async ctx => {
 
 bot.action('clientStatus', async ctx => {
 	if (ctx?.chat?.id) {
-		// eslint-disable-next-line @typescript-eslint/no-var-requires
-		const segmentationTable = require('./data/segmentation.json')
 		const segmentationClient = searchSegmentacion(data, segmentationTable)
 		const imageClasification = await buildImageBySegmentClient(segmentationClient, data.name)
 		bot.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message?.message_id ?? 0)
@@ -247,8 +247,6 @@ bot.action('clientStatus', async ctx => {
 
 bot.action('segmentacionAction', async ctx => {
 	if (ctx?.chat?.id) {
-		// eslint-disable-next-line @typescript-eslint/no-var-requires
-		const segmentationTable = require('./data/segmentation.json')
 		const segmentationClient = searchSegmentacion(data, segmentationTable)
 		const imageAction = await buildImageByAction(segmentationClient, data.name)
 		bot.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message?.message_id ?? 0)
