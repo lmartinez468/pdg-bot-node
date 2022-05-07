@@ -60,7 +60,7 @@ app.listen(process.env.PORT || 3000);
 
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const items: ItemsDescription[] = require('./data/items.json');
+import items from './data/items.json';
 const isLocal = process.env.isLocal;
 
 // "5074785160:AAFtjCHJQCVBaW5wuyFSwKwZ1Xlu8Mogxp0" bot Local
