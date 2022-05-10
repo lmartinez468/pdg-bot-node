@@ -42,6 +42,7 @@ let data;
 bot.hears(start, ctx => {
     var _a;
     if ((_a = ctx === null || ctx === void 0 ? void 0 : ctx.chat) === null || _a === void 0 ? void 0 : _a.id) {
+        axios_1.default.get(defaultPath);
         bot.telegram.sendMessage(ctx.chat.id, "En que te puedo ayudar?", {
             reply_markup: {
                 remove_keyboard: true,

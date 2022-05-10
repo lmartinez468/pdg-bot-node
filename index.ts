@@ -85,7 +85,10 @@ bot.command(['menu', 'opciones'], ctx => { ctx.reply("Opciones:") })
 const start = ['hola', 'buenos dias', 'ayuda', 'Hola', 'Buenos dias', ' Ayuda'];
 let data: Client;
 bot.hears(start, ctx => {
-	if (ctx?.chat?.id) {	
+	if (ctx?.chat?.id) {
+		isLocal != undefined ?? axios.get(defaultPath)
+	
+
 
 		bot.telegram.sendMessage(ctx.chat.id, "En que te puedo ayudar?", {
 
