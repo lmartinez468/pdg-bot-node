@@ -8,6 +8,7 @@ import express from "express";
 
 dotenv.config();
 registerFont("./gagalin.ttf", { family: "gagalin" })
+registerFont("./impact.ttf", { family: "impact" })
 registerFont("./EraserRegular.ttf", { family: "EraserRegular" })
 
 interface LastMsg {
@@ -86,9 +87,9 @@ const start = ['hola', 'buenos dias', 'ayuda', 'Hola', 'Buenos dias', ' Ayuda'];
 let data: Client;
 bot.hears(start, ctx => {
 	if (ctx?.chat?.id) {
-		isLocal != undefined ?? axios.get(defaultPath)
+		// neccessary to wakeup the mongo after 1 hours inused because start the hibernate.
+		isLocal == undefined ?? axios.get(defaultPath)
 	
-
 
 		bot.telegram.sendMessage(ctx.chat.id, "En que te puedo ayudar?", {
 
@@ -600,12 +601,16 @@ async function buildImageByPrediction(client: Client): Promise<Buffer> {
 	const canvas = createCanvas(1080, 1920);
 	const ctx = canvas.getContext('2d');
 	ctx.drawImage(image, 0, 0, 1080, 1920);
-	
 	ctx.font = '65px EraserRegular';
 	ctx.fillStyle = "rgb(255,255,255)";
-
 	ctx.fillText("PREDICCION: $" + client.nextOrderPredicted.toString().split(".")[0], 310, 740)
 	ctx.fillText("REAL: $" + client.nextOrder.toString().split(".")[0], 310, 940)
+
+	ctx.fillStyle = "rgb(0,0,0)";
+	ctx.font = '55px gagalin';
+	ctx.textAlign = 'center';
+	ctx.fillText("Cliente " + client.name, 540, 320)
+	
 
 	return canvas.toBuffer("image/png");
 }
