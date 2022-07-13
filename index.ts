@@ -57,7 +57,10 @@ interface Segmentation {
 const app = express()
 
 app.listen(process.env.PORT || 3000);
-
+app.get("/", async (_, res, err) => {
+	  res.status(200).json({"estado": "Activando el bot"});
+	}
+  )
 
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -146,17 +149,19 @@ bot.action('client', ctx => {
 	}
 });
 bot.action('lastOrder', ctx => {
-	if (ctx?.chat?.id) {
+	if (ctx?.chat?.id && data) { 
 		// bot.telegram.deleteMessage(ctx.chat.id,ctx.callbackQuery.message?.message_id ?? 0)
 		// bot.telegram.sendMessage(ctx.chat.id, "El último pedido fue de $600")
-		bot.telegram.editMessageText(ctx.chat.id, ctx.callbackQuery.message?.message_id, "", "El último pedido fue de $600", {
+		bot.telegram.editMessageText(ctx.chat.id, ctx.callbackQuery.message?.message_id, "", "El último pedido fue de $"+ data.nextOrder, {
 
-			reply_markup: {
+			reply_markup: { 
 				inline_keyboard: [
 					[{ text: "Volver", callback_data: "clientOptions" }],
 				]
 			}
 		})
+	} else {
+		bot.telegram.sendMessage(ctx.chat.id, "Ocurrio un error")
 	}
 }
 );
@@ -193,16 +198,37 @@ bot.action('outScopeClient', ctx => {
 bot.action('predictionOrder', async ctx => {
 	if (ctx?.chat?.id) {
 		bot.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message?.message_id ?? 0)
-		const imagePrediction = await buildImageByPrediction(data)
-		bot.telegram.sendPhoto(ctx.chat.id, { source: imagePrediction }, {
-			reply_markup: {
-				inline_keyboard: [
-									[{ text: "volver", callback_data: "clientOptions" },
-									{ text: "Cancelar", callback_data: "exit" }
-									]
-								]
-			}
-		})
+		if (data) {
+			const imagePrediction = await buildImageByPrediction(data)
+			bot.telegram.sendPhoto(ctx.chat.id, { source: imagePrediction }, {
+				reply_markup: {
+					inline_keyboard: [
+						[{ text: "volver", callback_data: "clientOptions" },
+						{ text: "Cancelar", callback_data: "exit" }
+						]
+					]
+				}
+			})
+		}
+	}
+})
+
+bot.action('clientInfo', async ctx => {
+	if (ctx?.chat?.id) {
+
+		bot.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message?.message_id ?? 0)
+		if (data) {
+			const imageInfo = await buildImageByInfo(data)
+			bot.telegram.sendPhoto(ctx.chat.id, { source: imageInfo }, {
+				reply_markup: {
+					inline_keyboard: [
+						[{ text: "volver", callback_data: "clientOptions" },
+						{ text: "Cancelar", callback_data: "exit" }
+						]
+					]
+				}
+			})
+		}
 	}
 })
 
@@ -211,19 +237,39 @@ bot.action('topProductsByClient', async ctx => {
 	if (ctx?.chat?.id) {
 		// const rex = new RegExp("^'([.*])'$");
 		bot.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message?.message_id ?? 0)
-		const rex = /'\w+', (\d+)*/g
+		if (data) {
+			const rex = /'\w+', (\d+)*/g
 
-		const bestProductsByClient = data.bestProduct.match(rex)
-		// "'post'".replaceAll("'","","gi")
-		if (bestProductsByClient) {
-			const bestProducts = bestProductsByClient.map(it => { return it.split(",") })
-			const imageProducts = await buildImageByClient(bestProducts, data.name)
-			bot.telegram.sendPhoto(ctx.chat.id, { source: imageProducts }, {
+			const bestProductsByClient = data.bestProduct.match(rex)
+			// "'post'".replaceAll("'","","gi")
+			if (bestProductsByClient) {
+				const bestProducts = bestProductsByClient.map(it => { return it.split(",") })
+				const imageProducts = await buildImageByClient(bestProducts, data.name)
+				bot.telegram.sendPhoto(ctx.chat.id, { source: imageProducts }, {
+					reply_markup: {
+						inline_keyboard: [
+							[{ text: "Volver", callback_data: "clientOptions" }, { text: "Cancelar", callback_data: "exit" }],
+						]
+					}
+				})
+			}
+		}
+	}
+});
+
+bot.action('clientStatus', async ctx => {
+	if (ctx?.chat?.id) {
+		bot.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message?.message_id ?? 0)
+		if (data) {
+			const segmentationClient = searchSegmentacion(data, segmentationTable)
+			const imageClasification = await buildImageBySegmentClient(segmentationClient, data.name)
+			bot.telegram.sendPhoto(ctx.chat.id, { source: imageClasification }, {
 				reply_markup: {
 					inline_keyboard: [
-
-						[{ text: "Volver", callback_data: "clientOptions" }, { text: "Cancelar", callback_data: "exit" }],
-
+						[{ text: "Ver Acción que se puede tomar hacia el cliente", callback_data: "segmentacionAction" }],
+						[{ text: "volver", callback_data: "clientOptions" },
+						{ text: "Cancelar", callback_data: "exit" }
+						]
 					]
 				}
 			})
@@ -231,38 +277,22 @@ bot.action('topProductsByClient', async ctx => {
 	}
 });
 
-bot.action('clientStatus', async ctx => {
-	if (ctx?.chat?.id) {
-		const segmentationClient = searchSegmentacion(data, segmentationTable)
-		const imageClasification = await buildImageBySegmentClient(segmentationClient, data.name)
-		bot.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message?.message_id ?? 0)
-		bot.telegram.sendPhoto(ctx.chat.id, { source: imageClasification }, {
-			reply_markup: {
-				inline_keyboard: [
-									[{ text: "Ver Acción que se puede tomar hacia el cliente", callback_data: "segmentacionAction" }],
-									[{ text: "volver", callback_data: "clientOptions" },
-									{ text: "Cancelar", callback_data: "exit" }
-									]
-								]
-			}
-		})
-	}
-});
-
 bot.action('segmentacionAction', async ctx => {
 	if (ctx?.chat?.id) {
-		const segmentationClient = searchSegmentacion(data, segmentationTable)
-		const imageAction = await buildImageByAction(segmentationClient, data.name)
 		bot.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message?.message_id ?? 0)
-		bot.telegram.sendPhoto(ctx.chat.id, { source: imageAction }, {
-			reply_markup: {
-				inline_keyboard: [
-									[{ text: "volver", callback_data: "clientOptions" },
-									{ text: "Cancelar", callback_data: "exit" }
+		if(data){
+			const segmentationClient = searchSegmentacion(data, segmentationTable)
+			const imageAction = await buildImageByAction(segmentationClient, data.name)
+			bot.telegram.sendPhoto(ctx.chat.id, { source: imageAction }, {
+				reply_markup: {
+					inline_keyboard: [
+										[{ text: "volver", callback_data: "clientOptions" },
+										{ text: "Cancelar", callback_data: "exit" }
+										]
 									]
-								]
-			}
-		})
+				}
+			})
+		}
 	}
 });
 
@@ -442,7 +472,7 @@ bot.action('clientOptions', ctx => {
 					[{ text: "Ver Monto del último pedido", callback_data: "lastOrder" }],
 					[{ text: "Ver clasificación del cliente", callback_data: "clientStatus" }],
 					[{ text: "Productos top del cliente", callback_data: "topProductsByClient" }],
-					[{ text: "Estadisticas del cliente", callback_data: "outScopeClient" }],
+					[{ text: "Información del cliente", callback_data: "clientInfo" }],
 					[{ text: "Cancelar", callback_data: "exit" }]
 				]
 			}
@@ -496,7 +526,6 @@ async function buildImageByClient(products: string[][], client: string): Promise
 	ctx.fillStyle = "rgb(217,149,22)";
 	const removeAccents = client.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
 	ctx.fillText(`al cliente ${removeAccents}`, 170, 210)
-	ctx.font = '45px gagalin';
 	ctx.fillStyle = "rgb(255,255,255)";
 	ctx.fillText("Producto", 340, 330)
 	ctx.fillText("Precio", 830, 330)
@@ -609,8 +638,29 @@ async function buildImageByPrediction(client: Client): Promise<Buffer> {
 	ctx.fillStyle = "rgb(0,0,0)";
 	ctx.font = '55px gagalin';
 	ctx.textAlign = 'center';
-	ctx.fillText("Cliente " + client.name, 540, 320)
+	const removedAccentsName = client.name.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+
+	ctx.fillText("Cliente " + removedAccentsName, 540, 320)
 	
+
+	return canvas.toBuffer("image/png");
+}
+async function buildImageByInfo(client: Client): Promise<Buffer> {
+
+	const image = await loadImage('./data/template/info.png');
+
+	const canvas = createCanvas(1080, 1920);
+	const ctx = canvas.getContext('2d');
+	ctx.drawImage(image, 0, 0, 1080, 1920);
+	ctx.font = '55px EraserRegular';
+	ctx.fillStyle = "rgb(254,65,100)";
+	const removedAccentsName = client.name.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+
+	ctx.fillText(removedAccentsName, 445, 365);
+	ctx.fillText(client.customerId.toString(), 263, 460)
+	ctx.fillText(client.country.toString(), 360, 560)
+	ctx.fillText("$" + client.avgPrice.toString().split(".")[0], 390, 745)
+	ctx.fillText(client.avgQuantity.toString().split(".")[0], 390, 890)
 
 	return canvas.toBuffer("image/png");
 }
